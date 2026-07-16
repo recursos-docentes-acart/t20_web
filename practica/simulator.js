@@ -1,4 +1,5 @@
 const {ranges,targets,validation}=window.G10_DATA;
+validation.readingTolerance=.5;
 
 const panoramaImage=document.getElementById("panoramaImage");
 const panoramaWrap=document.getElementById("panoramaWrap");
@@ -7,14 +8,30 @@ const scopeCanvas=document.getElementById("scopeCanvas");
 const scopeCtx=scopeCanvas.getContext("2d");
 scopeCtx.imageSmoothingEnabled = false; // crisper rendering
 
-const drumH=document.getElementById("drumH");
-const drumV=document.getElementById("drumV");
+const readingScope=document.getElementById("readingScope");
 const directionRange=document.getElementById("directionRange");
 const elevationRange=document.getElementById("elevationRange");
 
 const state={direction:3100,elevation:2700,dragging:false};
 
 function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+function roundToHalf(v){return Math.round(v*2)/2;}
+function parseReading(input){
+  const raw=input.value.trim().replace(",",".");
+  if(raw==="") return NaN;
+  const value=Number(raw);
+  return Number.isFinite(value) ? value : NaN;
+}
+function getMicroscopeReading(value){
+  const normalizedValue=((value%6400)+6400)%6400;
+  const mainNumber=Math.floor(normalizedValue/10);
+  const scalePosition=normalizedValue-mainNumber*10;
+  return {
+    mainNumber,
+    scalePosition,
+    formatted:normalizedValue.toFixed(Number.isInteger(normalizedValue)?0:1)
+  };
+}
 function normalized(){
   return {
     x:(state.direction-ranges.directionMin)/(ranges.directionMax-ranges.directionMin),
@@ -30,8 +47,8 @@ function updateFromPoint(clientX,clientY){
   const rect=panoramaWrap.getBoundingClientRect();
   const x=clamp((clientX-rect.left)/rect.width,0,1);
   const y=clamp((clientY-rect.top)/rect.height,0,1);
-  state.direction=Math.round(ranges.directionMin+x*(ranges.directionMax-ranges.directionMin));
-  state.elevation=Math.round(ranges.elevationMax-y*(ranges.elevationMax-ranges.elevationMin));
+  state.direction=roundToHalf(ranges.directionMin+x*(ranges.directionMax-ranges.directionMin));
+  state.elevation=roundToHalf(ranges.elevationMax-y*(ranges.elevationMax-ranges.elevationMin));
   directionRange.value=state.direction;
   elevationRange.value=state.elevation;
   render();
@@ -68,97 +85,105 @@ function drawScope(){
   scopeCtx.fillRect(0,0,620,620);
   scopeCtx.restore();
 }
-function drawDrum(canvas, value, axisLabel){
-  const ctx=canvas.getContext("2d");
-  const W=canvas.width, H=canvas.height;
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle="#eef2ee"; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle="#0d2032"; ctx.font="900 20px Arial"; ctx.fillText(`LECTURA ${axisLabel}`,18,24);
+function drawReadingBand(ctx,y,value,label,background,orientation){
+  const x=54,w=452,bodyH=184,tabW=116,tabH=60;
+  const bodyY=orientation==="top"?y+tabH:y;
+  const reading=getMicroscopeReading(value);
+  const scaleStartX=x+54,scaleEndX=x+w-54;
+  const scaleWidth=scaleEndX-scaleStartX;
+  const indicatorX=scaleStartX+(reading.scalePosition/10)*scaleWidth;
 
-  const coarse=Math.floor(value/100), fine=value%100;
-  const coarseX=18, coarseY=38, coarseW=308, coarseH=138;
-  ctx.fillStyle="#f9faf8"; ctx.fillRect(coarseX,coarseY,coarseW,coarseH);
-  ctx.strokeStyle="#89978e"; ctx.lineWidth=2; ctx.strokeRect(coarseX,coarseY,coarseW,coarseH);
-  const centerX=coarseX+coarseW/2, majorStep=52;
+  // Ventana en T: pestaña superior para V e inferior para Hz.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x,bodyY,w,bodyH);
+  ctx.rect(x+w/2-tabW/2,orientation==="top"?y:bodyY+bodyH-2,tabW,tabH+2);
+  ctx.clip();
+  const glass=ctx.createLinearGradient(x,bodyY,x+w,bodyY+bodyH);
+  glass.addColorStop(0,background);
+  glass.addColorStop(.52,orientation==="top"?"#cdf4f0":"#f5db38");
+  glass.addColorStop(1,orientation==="top"?"#9ed8da":"#dfbd1d");
+  ctx.fillStyle=glass;
+  ctx.fillRect(x,y,w,bodyH+tabH);
+  ctx.restore();
 
-  for(let h=coarse-4; h<=coarse+4; h++){
-    const x=centerX+(h-coarse)*majorStep;
-    if(x<coarseX+8 || x>coarseX+coarseW-8) continue;
-    ctx.strokeStyle="#304037"; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(x, coarseY+72); ctx.lineTo(x, coarseY+116); ctx.stroke();
-    if(h<coarse+4){
-      const mid=x+majorStep/2;
-      if(mid>=coarseX+8 && mid<=coarseX+coarseW-8){
-        ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(mid, coarseY+86); ctx.lineTo(mid, coarseY+112); ctx.stroke();
-      }
-    }
-    ctx.fillStyle="#23332a"; ctx.font="bold 24px Arial"; ctx.textAlign="center";
-    ctx.fillText(String(h).padStart(2,"0"), x, coarseY+132);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x+2,bodyY+2,w-4,bodyH-4); ctx.clip();
+  ctx.fillStyle="rgba(20,48,61,.8)";
+  ctx.strokeStyle="rgba(20,48,61,.76)";
+  ctx.textAlign="center";
+
+  const scaleTop=orientation==="top"?bodyY+94:bodyY+18;
+  const numberY=orientation==="top"?bodyY+57:bodyY+155;
+  const labelY=scaleTop+67;
+
+  // Cinta continua: al cambiar de decena, el número siguiente entra sin salto visual.
+  ctx.font="42px 'Arial Narrow', Arial, sans-serif";
+  [[reading.mainNumber+1,indicatorX-scaleWidth],
+   [reading.mainNumber,indicatorX],
+   [reading.mainNumber-1,indicatorX+scaleWidth]]
+    .forEach(([number,tx])=>ctx.fillText(String((number+640)%640).padStart(3,"0"),tx,numberY));
+
+  ctx.lineWidth=2.2;
+  ctx.beginPath();
+  if(orientation==="top"){
+    ctx.moveTo(indicatorX,numberY+12); ctx.lineTo(indicatorX,scaleTop+40);
+  }else{
+    ctx.moveTo(indicatorX,scaleTop-5); ctx.lineTo(indicatorX,numberY-20);
   }
-  // Flecha de centenas: vértice hacia la escalilla
-  ctx.fillStyle="#d83f31";
-  ctx.beginPath();
-  ctx.moveTo(centerX, coarseY+68);
-  ctx.lineTo(centerX-11, coarseY+48);
-  ctx.lineTo(centerX+11, coarseY+48);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.strokeStyle="#d83f31";
-  ctx.lineWidth=2;
-  ctx.beginPath();
-  ctx.moveTo(centerX, coarseY+10);
-  ctx.lineTo(centerX, coarseY+48);
   ctx.stroke();
 
-  const fineX=350, fineY=22, fineW=170, fineH=186;
-  ctx.fillStyle="#f8f9f7"; ctx.fillRect(fineX, fineY, fineW, fineH);
-  ctx.strokeStyle="#89978e"; ctx.lineWidth=2; ctx.strokeRect(fineX, fineY, fineW, fineH);
-  const centerY=fineY+fineH/2, pxPerUnit=4.2;
-
-  for(let offset=-24; offset<=24; offset++){
-    const raw=fine+offset;
-    const wrapped=((raw%100)+100)%100;
-    const y=centerY + offset*pxPerUnit;
-    if(y<fineY+8 || y>fineY+fineH-8) continue;
-    const major=wrapped%10===0;
-    const medium=wrapped%5===0;
-    ctx.strokeStyle="#324038"; ctx.lineWidth=major?2:1;
+  // Escala 0–10, con una marca corta en cada media milésima.
+  for(let i=0;i<=20;i++){
+    const tx=scaleStartX+(i/20)*scaleWidth;
+    const integerMark=i%2===0;
+    ctx.lineWidth=integerMark?1.6:.9;
     ctx.beginPath();
-    ctx.moveTo(fineX+16, y);
-    ctx.lineTo(fineX + (major?78:medium?60:46), y);
+    ctx.moveTo(tx,scaleTop);
+    ctx.lineTo(tx,scaleTop+(integerMark?38:25));
     ctx.stroke();
-    if(major){
-      ctx.fillStyle="#23332a"; ctx.font="bold 18px Arial"; ctx.textAlign="right"; ctx.textBaseline="middle";
-      ctx.fillText(String(wrapped).padStart(2,"0"), fineX+154, y);
+    if(integerMark){
+      ctx.font="17px 'Arial Narrow', Arial, sans-serif";
+      ctx.fillText(String(i/2),tx,labelY);
     }
   }
-  // Flecha de unidades: vértice hacia la escalilla
-  ctx.fillStyle="#d83f31";
-  ctx.beginPath();
-  ctx.moveTo(fineX+18, centerY);
-  ctx.lineTo(fineX-4, centerY-10);
-  ctx.lineTo(fineX-4, centerY+10);
-  ctx.closePath();
-  ctx.fill();
+  ctx.restore();
 
-  ctx.fillStyle="#5d6d66"; ctx.font="12px Arial"; ctx.textAlign="left";
-  ctx.fillText("Centenas", coarseX, H-14); ctx.fillText("Unidades (1ºº)", fineX, H-14);
+  ctx.fillStyle="rgba(20,48,61,.8)";
+  ctx.textAlign="center";
+  ctx.font="38px 'Arial Narrow', Arial, sans-serif";
+  ctx.fillText(label,x+w/2,orientation==="top"?y+45:bodyY+bodyH+48);
+}
+function drawReadingScope(){
+  const ctx=readingScope.getContext("2d");
+  ctx.clearRect(0,0,readingScope.width,readingScope.height);
+  const opticalField=ctx.createRadialGradient(280,300,35,280,300,390);
+  opticalField.addColorStop(0,"#354a63");
+  opticalField.addColorStop(.72,"#24364d");
+  opticalField.addColorStop(1,"#101b2a");
+  ctx.fillStyle=opticalField;
+  ctx.fillRect(0,0,readingScope.width,readingScope.height);
+  drawReadingBand(ctx,38,state.elevation,"V","#b8edf0","top");
+  drawReadingBand(ctx,330,state.direction,"Hz","#f3d42f","bottom");
+
+  const vignette=ctx.createRadialGradient(280,300,210,280,300,390);
+  vignette.addColorStop(0,"rgba(0,0,0,0)");
+  vignette.addColorStop(1,"rgba(0,0,0,.38)");
+  ctx.fillStyle=vignette;
+  ctx.fillRect(0,0,readingScope.width,readingScope.height);
 }
 function buildReticle(){
   const v=document.getElementById("verticalTicks");
   const h=document.getElementById("horizontalTicks");
-  for(let i=-5;i<=5;i++){
+  const gap=22,spacing=29;
+  v.insertAdjacentHTML("beforeend",`<line x1="310" y1="24" x2="310" y2="${310-gap}"/><line x1="310" y1="${310+gap}" x2="310" y2="596"/>`);
+  h.insertAdjacentHTML("beforeend",`<line x1="24" y1="310" x2="${310-gap}" y2="310"/><line x1="${310+gap}" y1="310" x2="596" y2="310"/>`);
+  for(let i=-9;i<=9;i++){
     if(i===0) continue;
-    const y=310+i*29;
-    const len=Math.abs(i)%5===0?22:(Math.abs(i)%2===0?14:10);
-    v.insertAdjacentHTML("beforeend",`<line x1="${310-len/2}" y1="${y}" x2="${310+len/2}" y2="${y}"/>`);
-  }
-  for(let i=-10;i<=10;i++){
-    if(i===0) continue;
-    const x=310+i*24;
-    const len=Math.abs(i)%5===0?22:(Math.abs(i)%2===0?14:10);
-    h.insertAdjacentHTML("beforeend",`<line x1="${x}" y1="${310-len/2}" x2="${x}" y2="${310+len/2}"/>`);
+    const pos=310+i*spacing;
+    const major=i%2===0,len=major?20:11,label=Math.abs(i)*5;
+    v.insertAdjacentHTML("beforeend",`<line x1="${310-len/2}" y1="${pos}" x2="${310+len/2}" y2="${pos}"/>${major?`<text x="${i<0?322:276}" y="${pos+6}">${label}</text>`:""}`);
+    h.insertAdjacentHTML("beforeend",`<line x1="${pos}" y1="${310-len/2}" x2="${pos}" y2="${310+len/2}"/>${major?`<text x="${pos-8}" y="${i<0?338:298}">${label}</text>`:""}`);
   }
 }
 function buildRulers(){
@@ -215,11 +240,11 @@ if(activeTarget){
   updateFromReadings();
   document.getElementById("answerForm").addEventListener("submit",event=>{
     event.preventDefault();
-    const answerH=Number(document.getElementById("answerH").value);
-    const answerV=Number(document.getElementById("answerV").value);
+    const answerH=parseReading(document.getElementById("answerH"));
+    const answerV=parseReading(document.getElementById("answerV"));
     const feedback=document.getElementById("exerciseFeedback");
     if(!Number.isFinite(answerH) || !Number.isFinite(answerV)){
-      feedback.className="feedback error"; feedback.textContent="Escriba una lectura H y una lectura V antes de comprobar."; return;
+      feedback.className="feedback error"; feedback.textContent="Escriba una lectura Hz y una lectura V antes de comprobar."; return;
     }
     const aimH=Math.abs(state.direction-activeTarget.direction);
     const aimV=Math.abs(state.elevation-activeTarget.elevation);
@@ -230,7 +255,7 @@ if(activeTarget){
     const readVOK=readV<=validation.readingTolerance;
     if(aimOK && readHOK && readVOK){
       feedback.className="feedback success";
-      feedback.textContent="Ejercicio correcto: puntería válida y lecturas H y V correctas dentro de la tolerancia.";
+      feedback.textContent="Ejercicio correcto: puntería válida y lecturas Hz y V correctas dentro de la tolerancia.";
       return;
     }
     const messages=[];
@@ -240,7 +265,7 @@ if(activeTarget){
       messages.push(`Puntería: ${dirMsg}; ${elevMsg}.`);
     } else messages.push("Puntería correcta.");
     if(!readHOK || !readVOK){
-      const rm=[]; if(!readHOK) rm.push("revise la lectura H"); if(!readVOK) rm.push("revise la lectura V");
+      const rm=[]; if(!readHOK) rm.push("revise la lectura Hz"); if(!readVOK) rm.push("revise la lectura V");
       messages.push(`Lecturas: ${rm.join(" y ")}.`);
     } else messages.push("Lecturas correctas.");
     feedback.className="feedback error"; feedback.textContent=messages.join(" ");
@@ -254,7 +279,6 @@ function render(){
   aimMarker.style.left=`${p.x*100}%`;
   aimMarker.style.top=`${p.y*100}%`;
   drawScope();
-  drawDrum(drumH,state.direction,"H");
-  drawDrum(drumV,state.elevation,"V");
+  drawReadingScope();
 }
 buildReticle(); buildRulers(); updateFromReadings();

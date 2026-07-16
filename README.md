@@ -7,7 +7,7 @@ Recurso web responsive para la familiarización con el goniómetro Wild T-20.
 1. Generalidades, características y empleo.
 2. Descripción interactiva de los componentes.
 3. Galería de vistas generales del aparato.
-4. Práctica de puntería y lectura de limbos, pendiente de adaptación al sistema de lectura del T-20.
+4. Práctica de puntería con la retícula del T-20 y lectura simultánea de sus limbos.
 
 La nivelación y el manejo básico de la brújula no se desarrollan como apartados independientes, ya que son procedimientos comunes a otros aparatos y no se dispone de contenido específico adicional para este recurso.
 
@@ -18,7 +18,7 @@ La nivelación y el manejo básico de la brújula no se desarrollan como apartad
 - `styles.css`: diseño responsive de la aplicación.
 - `assets/images/nuevas/`: vistas generales y fotografías de detalle del T-20.
 - `assets/videos/`: material audiovisual, cuando proceda.
-- `practica/`: simulador y ejercicios de observación y lectura; actualmente pendientes de adaptación al visor del T-20.
+- `practica/`: simulador y ejercicios adaptados a la retícula y al microscopio de lectura del T-20.
 
 ## Imágenes previstas
 

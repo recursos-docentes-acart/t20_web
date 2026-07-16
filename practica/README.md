@@ -1,4 +1,4 @@
-# G-10 · Práctica final corregida v5
+# T-20 · Práctica de puntería y lectura
 
 Se han recalibrado los cuatro ejercicios para que coincidan exactamente:
 
@@ -17,7 +17,7 @@ Se han recalibrado los cuatro ejercicios para que coincidan exactamente:
 ## Tolerancias
 
 - Puntería: ±25ºº.
-- Lectura escrita de H: ±1ºº respecto a lo mostrado por el tambor.
-- Lectura escrita de V: ±1ºº respecto a lo mostrado por el tambor.
+- Lectura escrita de Hz: ±0,5ºº respecto a lo mostrado por el microscopio.
+- Lectura escrita de V: ±0,5ºº respecto a lo mostrado por el microscopio.
 
-Durante el ejercicio, la respuesta escrita se compara con la posición real de los tambores en el momento de pulsar «Comprobar».
+Durante el ejercicio, la respuesta escrita se compara con la posición real de los limbos en el momento de pulsar «Comprobar».

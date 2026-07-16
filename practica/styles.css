@@ -96,6 +96,11 @@ input[type="range"]{width:100%;accent-color:var(--green)}
 .button-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 0 12px}
 .button-row button{border:1px solid var(--line);background:#fff;padding:9px 4px;border-radius:8px;cursor:pointer;font-weight:800}
 .drum-canvas{width:100%;height:auto;border:1px solid #d4ddd8;border-radius:12px;background:#eef2ee}
+.reading-viewer{border-top:1px solid var(--line);padding-top:16px}
+.reading-viewer .control-title span{color:var(--ink);font-size:.9rem;letter-spacing:0;text-transform:none}
+.reading-viewer .control-title small{color:var(--muted);font-weight:800}
+.reading-canvas{display:block;width:100%;height:auto;border:8px solid #101820;border-radius:48% / 10%;background:#172331;box-shadow:inset 0 0 30px rgba(0,0,0,.5)}
+.reading-viewer p{margin:10px 0 0;color:var(--muted);font-size:.78rem;line-height:1.45}
 
 .exercise-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
 .exercise-card{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:var(--shadow)}
@@ -448,4 +453,15 @@ input[type="range"]{width:100%;accent-color:var(--green)}
   .exercise-banner{
     padding:14px;
   }
+}
+
+@media(max-width:820px){
+  .instrument-stage{display:grid;grid-template-columns:1fr;grid-template-areas:none}
+  .visor-panel,.controls-panel{grid-area:auto}
+  .controls-panel{display:grid;padding:14px}
+  .horizontal-control,.vertical-control{display:block;grid-area:auto;padding:12px 0;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none}
+  .horizontal-control{border-top:0}
+  .vertical-control input[type="range"]{writing-mode:horizontal-tb;direction:ltr;width:100%;height:auto;margin:0}
+  .horizontal-control .button-row,.vertical-control .button-row{display:grid;grid-template-columns:repeat(4,1fr);margin:10px 0 0}
+  .reading-viewer{grid-area:auto}
 }

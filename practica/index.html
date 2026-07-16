@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Goniómetro Wild G-10 · Práctica de lecturas</title>
+  <title>Goniómetro Wild T-20 · Práctica de lecturas</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="topbar">
   <div>
     <p>Academia de Artillería</p>
-    <h1>G-10 · Puntería y lectura de tambores</h1>
+    <h1>T-20 · Puntería y lectura de limbos</h1>
   </div>
   <nav>
-    <a href="../index.html">Recurso G-10</a>
+    <a href="../index.html">Recurso T-20</a>
     <a class="active" href="index.html">Simulador</a>
     <a href="ejercicios.html">Ejercicios</a>
   </nav>
@@ -23,7 +23,7 @@
   <section class="intro">
     <div>
       <span class="eyebrow">05 · LECTURAS</span>
-      <h2>Apunte al objetivo, lea H y V con precisión de 1ºº y escriba ambas lecturas</h2>
+      <h2>Apunte al objetivo, lea Hz y V en el microscopio del T-20 y escriba ambas lecturas</h2>
       <p>La panorámica del simulador permanece limpia. La referencia del objetivo sólo aparece en la página de ejercicios.</p>
     </div>
     <button id="resetButton" class="secondary">Centrar vista</button>
@@ -37,11 +37,11 @@
     </div>
 
     <form id="answerForm" class="answer-form" novalidate>
-      <label>Lectura H
-        <input id="answerH" type="number" inputmode="numeric" min="1200" max="5000" placeholder="0000" required>
+      <label>Lectura Hz
+        <input id="answerH" type="text" inputmode="decimal" pattern="[0-9]+([,.][05])?" placeholder="0000,0" autocomplete="off" required>
       </label>
       <label>Lectura V
-        <input id="answerV" type="number" inputmode="numeric" min="1800" max="3600" placeholder="0000" required>
+        <input id="answerV" type="text" inputmode="decimal" pattern="[0-9]+([,.][05])?" placeholder="0000,0" autocomplete="off" required>
       </label>
       <button class="primary" type="submit">Comprobar</button>
       <a href="ejercicios.html" class="secondary">Cambiar ejercicio</a>
@@ -65,59 +65,55 @@
           <div class="aim-marker" id="aimMarker" aria-hidden="true"></div>
         </div>
       </div>
-      <p class="panorama-note">Las reglas ayudan a localizar el sector. La lectura exacta debe obtenerse en los tambores H y V.</p>
+      <p class="panorama-note">Las reglas ayudan a localizar el sector. La lectura exacta se obtiene en el microscopio de limbos.</p>
     </article>
 
     <div class="instrument-stage">
       <article class="panel visor-panel">
       <div class="panel-heading">
         <div><span class="eyebrow">ANTEOJO</span><h3>Vista simulada</h3></div>
-        <span class="hint">Campo visual 165ºº</span>
+        <span class="hint">Retícula T-20 · divisiones de 5ºº</span>
       </div>
 
       <div class="eyepiece">
         <canvas id="scopeCanvas" width="620" height="620"></canvas>
         <svg class="reticle" viewBox="0 0 620 620" aria-label="Retícula del anteojo">
-          <line x1="310" y1="24" x2="310" y2="596"/>
-          <line x1="24" y1="310" x2="596" y2="310"/>
           <g id="verticalTicks"></g>
           <g id="horizontalTicks"></g>
-          <text x="321" y="124">50</text>
-          <text x="97" y="302">0</text>
-          <text x="162" y="302">20</text>
-          <text x="434" y="302">80</text>
-          <text x="500" y="302">100</text>
         </svg>
       </div>
     </article>
 
     <article class="panel controls-panel">
       <div class="panel-heading">
-        <div><span class="eyebrow">MANDOS Y TAMBORES</span><h3>Lecturas H y V</h3></div>
+        <div><span class="eyebrow">MANDOS Y MICROSCOPIO</span><h3>Lecturas Hz y V</h3></div>
       </div>
 
       <div class="control-block horizontal-control">
-        <div class="control-title"><label for="directionRange">Movimiento H</label><span>Tambor H</span></div>
-        <input id="directionRange" type="range" min="1200" max="5000" value="3100" step="1">
+        <div class="control-title"><label for="directionRange">Movimiento horizontal</label><span>Limbo Hz</span></div>
+        <input id="directionRange" type="range" min="1200" max="5000" value="3100" step="0.5">
         <div class="button-row">
           <button type="button" data-axis="x" data-step="-20">◀◀</button>
-          <button type="button" data-axis="x" data-step="-1">◀</button>
-          <button type="button" data-axis="x" data-step="1">▶</button>
+          <button type="button" data-axis="x" data-step="-0.5" aria-label="Disminuir 0,5 milésimas">◀</button>
+          <button type="button" data-axis="x" data-step="0.5" aria-label="Aumentar 0,5 milésimas">▶</button>
           <button type="button" data-axis="x" data-step="20">▶▶</button>
         </div>
-        <canvas id="drumH" class="drum-canvas" width="560" height="230" aria-label="Tambor horizontal"></canvas>
       </div>
 
       <div class="control-block vertical-control">
-        <div class="control-title"><label for="elevationRange">Movimiento V</label><span>Tambor V</span></div>
-        <input id="elevationRange" type="range" min="1800" max="3600" value="2700" step="1">
+        <div class="control-title"><label for="elevationRange">Movimiento vertical</label><span>Limbo V</span></div>
+        <input id="elevationRange" type="range" min="1800" max="3600" value="2700" step="0.5">
         <div class="button-row">
           <button type="button" data-axis="y" data-step="20">▲▲</button>
-          <button type="button" data-axis="y" data-step="1">▲</button>
-          <button type="button" data-axis="y" data-step="-1">▼</button>
+          <button type="button" data-axis="y" data-step="0.5" aria-label="Aumentar 0,5 milésimas">▲</button>
+          <button type="button" data-axis="y" data-step="-0.5" aria-label="Disminuir 0,5 milésimas">▼</button>
           <button type="button" data-axis="y" data-step="-20">▼▼</button>
         </div>
-        <canvas id="drumV" class="drum-canvas" width="560" height="230" aria-label="Tambor vertical"></canvas>
+      </div>
+      <div class="reading-viewer">
+        <div class="control-title"><span>Microscopio de lectura</span><small>V · azul / Hz · amarillo</small></div>
+        <canvas id="readingScope" class="reading-canvas" width="560" height="620" aria-label="Microscopio de lectura simultánea de los limbos vertical y horizontal"></canvas>
+        <p>El número principal indica la decena y su posición sobre la escala 0–10 completa las unidades y medias milésimas.</p>
       </div>
     </article>
     </div>
@@ -128,8 +124,8 @@
     <h3>Comprobación completa</h3>
     <ul>
       <li>Puntería: tolerancia de ±25ºº.</li>
-      <li>Lectura H: tolerancia de ±1ºº.</li>
-      <li>Lectura V: tolerancia de ±1ºº.</li>
+      <li>Lectura Hz: tolerancia de ±0,5ºº.</li>
+      <li>Lectura V: tolerancia de ±0,5ºº.</li>
     </ul>
   </section>
 </main>
