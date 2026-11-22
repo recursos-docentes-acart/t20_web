@@ -35,3 +35,9 @@ Las fotografías de detalle utilizadas por `app.js` se almacenan también en `as
 ## Publicación
 
 El proyecto está preparado para publicarse como sitio estático mediante GitHub Pages y para enlazarse o integrarse como recurso externo en Moodle.
+
+## Licencias
+
+- **Contenido educativo original:** [CC BY-NC-SA 4.0](LICENSE-CONTENT.md).
+- **Código HTML, CSS y JavaScript:** [MIT](LICENSE-CODE.md).
+- **Materiales de terceros:** mantienen sus respectivos derechos y licencias y quedan excluidos de las licencias anteriores salvo indicación expresa.
